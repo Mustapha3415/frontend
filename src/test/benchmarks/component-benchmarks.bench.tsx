@@ -1,4 +1,4 @@
-import { describe, bench } from 'vitest';
+import { describe } from 'vitest';
 import { render } from '@testing-library/react';
 import React from 'react';
 import {
@@ -85,6 +85,7 @@ export interface BenchmarkCase {
 const noop = () => {};
 
 const SEARCH_FILTERS: CreatorSearchFilters = {
+  category: '',
   search: '',
   verifiedOnly: false,
   minEarnings: '',
@@ -176,9 +177,7 @@ export const BENCHMARK_CASES: BenchmarkCase[] = [
   },
   {
     name: 'CreatorSearchBar',
-    render: () => (
-      <CreatorSearchBar filters={SEARCH_FILTERS} onChange={noop} onReset={noop} />
-    ),
+    render: () => <CreatorSearchBar filters={SEARCH_FILTERS} onChange={noop} onReset={noop} />,
   },
   {
     name: 'DorisioButton',
@@ -249,21 +248,28 @@ export const BENCHMARK_CASES: BenchmarkCase[] = [
 
 describe('component render performance', () => {
   for (const benchmarkCase of BENCHMARK_CASES) {
-    bench(benchmarkCase.name, () => {
-      const { unmount } = render(benchmarkCase.render());
-      unmount();
-    });
+    (globalThis as unknown as Record<string, (name: string, fn: () => void) => void>).bench(
+      benchmarkCase.name,
+      () => {
+        const { unmount } = render(benchmarkCase.render());
+        unmount();
+      }
+    );
   }
 });
 
 // Expose the case list and thresholds for the CI threshold checker.
 if (typeof globalThis !== 'undefined') {
-  (globalThis as typeof globalThis & {
-    __PERF_THRESHOLDS__: Record<string, number>;
-    __PERF_CASES__: string[];
-  }).__PERF_THRESHOLDS__ = PERF_THRESHOLDS;
-  (globalThis as typeof globalThis & {
-    __PERF_THRESHOLDS__: Record<string, number>;
-    __PERF_CASES__: string[];
-  }).__PERF_CASES__ = BENCHMARK_CASES.map((c) => c.name);
+  (
+    globalThis as typeof globalThis & {
+      __PERF_THRESHOLDS__: Record<string, number>;
+      __PERF_CASES__: string[];
+    }
+  ).__PERF_THRESHOLDS__ = PERF_THRESHOLDS;
+  (
+    globalThis as typeof globalThis & {
+      __PERF_THRESHOLDS__: Record<string, number>;
+      __PERF_CASES__: string[];
+    }
+  ).__PERF_CASES__ = BENCHMARK_CASES.map((c) => c.name);
 }
